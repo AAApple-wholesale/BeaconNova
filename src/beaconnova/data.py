@@ -1,11 +1,13 @@
 ﻿from __future__ import annotations
 
 from pathlib import Path
+from zipfile import ZipFile
+import xml.etree.ElementTree as ET
 
 import numpy as np
 import pandas as pd
 
-from .config import FACILITY_FILE, RAIL_FILE, ROPEWAY_FILE, SECURITY_FILE, TICKET_FILE
+from .config import FACILITY_FILE, OFFICIAL_MAP_FILE, PROBLEM_DOC_FILE, RAIL_FILE, ROPEWAY_FILE, SECURITY_FILE, TICKET_FILE, USER_MAP_FILE
 
 
 def _parse_datetime(date_series: pd.Series, time_series: pd.Series) -> pd.Series:
@@ -153,3 +155,83 @@ def load_ropeway_capacity(data_dir: Path) -> pd.DataFrame:
     out["has_shade"] = _contains(out["facility_text"], "遮阳")
     out["ropeway_exposure_index"] = np.clip(1.0 - 0.45 * out["has_cooling"] - 0.30 * out["has_shade"], 0.0, 1.0)
     return out.fillna(0.0)
+
+
+def _docx_text(path: Path) -> str:
+    if not path.exists():
+        return ""
+    try:
+        with ZipFile(path) as archive:
+            xml = archive.read("word/document.xml")
+        root = ET.fromstring(xml)
+        namespace = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+        parts = []
+        for para in root.findall(".//w:p", namespace):
+            text = "".join((node.text or "") for node in para.findall(".//w:t", namespace)).strip()
+            if text:
+                parts.append(text)
+        return "\n".join(parts)
+    except Exception:
+        return ""
+
+
+def _image_profile(path: Path, asset_id: str, asset_name: str) -> dict[str, float | str]:
+    row: dict[str, float | str] = {
+        "asset_id": asset_id,
+        "asset_name": asset_name,
+        "asset_type": "map",
+        "asset_file_size_kb": float(path.stat().st_size / 1024.0) if path.exists() else 0.0,
+        "map_width": 0.0,
+        "map_height": 0.0,
+        "map_aspect_ratio": 0.0,
+        "map_brightness_mean": 0.0,
+        "map_brightness_std": 0.0,
+        "doc_char_count": 0.0,
+        "doc_risk_mentions": 0.0,
+        "doc_weather_mentions": 0.0,
+        "doc_ropeway_mentions": 0.0,
+    }
+    if not path.exists():
+        return row
+    try:
+        from PIL import Image, ImageStat
+
+        with Image.open(path) as image:
+            row["map_width"] = float(image.width)
+            row["map_height"] = float(image.height)
+            row["map_aspect_ratio"] = float(image.width / image.height) if image.height else 0.0
+            gray = image.convert("L")
+            stat = ImageStat.Stat(gray)
+            row["map_brightness_mean"] = float(stat.mean[0])
+            row["map_brightness_std"] = float(stat.stddev[0])
+    except Exception:
+        pass
+    return row
+
+
+def load_context_assets(data_dir: Path) -> pd.DataFrame:
+    """Load non-tabular context assets as static graph-node metadata."""
+    rows = [
+        _image_profile(data_dir / OFFICIAL_MAP_FILE, "map:official", "手绘官方导览图"),
+        _image_profile(data_dir / USER_MAP_FILE, "map:user", "网友导览图"),
+    ]
+    doc_path = data_dir / PROBLEM_DOC_FILE
+    doc_text = _docx_text(doc_path)
+    rows.append(
+        {
+            "asset_id": "doc:problem",
+            "asset_name": "赛题五说明文档",
+            "asset_type": "document",
+            "asset_file_size_kb": float(doc_path.stat().st_size / 1024.0) if doc_path.exists() else 0.0,
+            "map_width": 0.0,
+            "map_height": 0.0,
+            "map_aspect_ratio": 0.0,
+            "map_brightness_mean": 0.0,
+            "map_brightness_std": 0.0,
+            "doc_char_count": float(len(doc_text)),
+            "doc_risk_mentions": float(doc_text.count("风险") + doc_text.count("预警")),
+            "doc_weather_mentions": float(doc_text.count("天气") + doc_text.count("气象")),
+            "doc_ropeway_mentions": float(doc_text.count("索道") + doc_text.count("缆车")),
+        }
+    )
+    return pd.DataFrame(rows).fillna(0.0)

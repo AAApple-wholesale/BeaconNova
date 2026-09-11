@@ -1,0 +1,4 @@
+﻿asset_id,asset_name,asset_type,asset_file_size_kb,map_width,map_height,map_aspect_ratio,map_brightness_mean,map_brightness_std,doc_char_count,doc_risk_mentions,doc_weather_mentions,doc_ropeway_mentions
+map:official,手绘官方导览图,map,490.4765625,1200.0,1455.0,0.8247422680412371,155.08159621993127,68.47314092963296,0.0,0.0,0.0,0.0
+map:user,网友导览图,map,76.736328125,800.0,1069.0,0.7483629560336763,236.97131898971,49.602921043926536,0.0,0.0,0.0,0.0
+doc:problem,赛题五说明文档,document,52.236328125,0.0,0.0,0.0,0.0,0.0,4158.0,22.0,7.0,7.0

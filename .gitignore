@@ -18,4 +18,7 @@ outputs/baseline_smoke/predictions.csv
 outputs/baseline_v0_2/predictions.csv
 outputs/baseline_v0_3/predictions.csv
 outputs/baseline_v0_3_smoke/predictions.csv
+outputs/graph_v0_4/graph_predictions.csv
+outputs/graph_v0_4_smoke/
+outputs/graph_v0_4_smoke/graph_predictions.csv
 
