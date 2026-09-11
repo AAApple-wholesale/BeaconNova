@@ -10,6 +10,8 @@ DEFAULT_OUTPUT_DIR = Path("outputs") / "baseline"
 SECURITY_FILE = "表2安检口每5分钟安检数据：security_gate.csv.csv"
 RAIL_FILE = "表3轨道交通客流表：rail_flow.csv"
 TICKET_FILE = "表1入园票务数据表：ticket.csv"
+FACILITY_FILE = "八达岭景区核心打卡点位全量承载与服务效率参数总表.xls"
+ROPEWAY_FILE = "南北索道基本情况.xls"
 
 
 @dataclass(frozen=True)
@@ -22,3 +24,4 @@ class ModelConfig:
     test_days: int = 21
     random_state: int = 42
     use_ticket_features: bool = True
+    use_facility_features: bool = True

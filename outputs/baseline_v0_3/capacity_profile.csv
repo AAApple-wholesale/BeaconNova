@@ -1,0 +1,11 @@
+﻿profile_type,point_name,effective_area_sqm,instant_capacity,hourly_capacity,max_dwell_min,weather_exposure_index,bottleneck_risk_index,ropeway_name,line,vehicle_capacity,saturated_hourly_capacity,platform_instant_capacity,queue_limit_min,operating_derate_ratio,ropeway_exposure_index
+facility_point,北八楼・好汉坡制高点,88.0,80.0,1100.0,6.0,0.55,0.8,,,,,,,,
+facility_point,北索道入口平台,75.0,70.0,1300.0,4.0,0.30000000000000004,0.35,,,,,,,,
+facility_point,北四楼・好汉石打卡点,62.0,60.0,2200.0,5.0,0.30000000000000004,0.35,,,,,,,,
+facility_point,北门锁钥关城城楼,55.0,50.0,3200.0,4.0,0.10000000000000003,0.0,,,,,,,,
+facility_point,北八至北九 S 弯长城,42.0,40.0,900.0,3.0,0.55,1.0,,,,,,,,
+facility_point,南索道入口平台,40.0,32.0,950.0,4.0,0.30000000000000004,0.2,,,,,,,,
+facility_point,南四楼南线全景机位,38.0,35.0,1800.0,6.0,0.55,0.0,,,,,,,,
+facility_point,岔道城古炮展区,30.0,25.0,2800.0,5.0,0.30000000000000004,0.0,,,,,,,,
+ropeway,,,,,,,,北线索道（北八楼空中索道）,north,8.0,1800.0,70.0,12.0,0.75,0.25000000000000006
+ropeway,,,,,,,,南线索道（南四楼地面缆车）,south,120.0,1000.0,32.0,9.0,0.6944444444444444,0.25000000000000006

@@ -19,6 +19,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="Directory for output CSV files.")
     parser.add_argument("--test-days", type=int, default=21, help="Number of latest dates used as chronological test set.")
     parser.add_argument("--skip-ticket", action="store_true", help="Skip large ticket-stream aggregation for a faster smoke run.")
+    parser.add_argument("--skip-facility", action="store_true", help="Skip scenic-capacity and ropeway parameter features.")
     return parser.parse_args()
 
 
@@ -29,6 +30,7 @@ def main() -> None:
         output_dir=args.output_dir,
         test_days=args.test_days,
         use_ticket_features=not args.skip_ticket,
+        use_facility_features=not args.skip_facility,
     )
     outputs = run_baseline(config)
     print("Baseline run completed.")

@@ -6,9 +6,43 @@ import pandas as pd
 
 from .baseline import MultiTargetBaseline, chronological_split, regression_metrics
 from .config import ModelConfig
-from .data import load_rail_data, load_security_data, load_ticket_aggregates
+from .data import load_facility_capacity, load_rail_data, load_ropeway_capacity, load_security_data, load_ticket_aggregates
 from .features import build_feature_frame, feature_columns
 from .scoring import add_comfort_and_risk, risk_summary
+
+
+def _capacity_profile(facility: pd.DataFrame | None, ropeway: pd.DataFrame | None) -> pd.DataFrame:
+    parts: list[pd.DataFrame] = []
+    if facility is not None and not facility.empty:
+        keep = [
+            "point_name",
+            "effective_area_sqm",
+            "instant_capacity",
+            "hourly_capacity",
+            "max_dwell_min",
+            "weather_exposure_index",
+            "bottleneck_risk_index",
+        ]
+        temp = facility[[col for col in keep if col in facility]].copy()
+        temp.insert(0, "profile_type", "facility_point")
+        parts.append(temp)
+    if ropeway is not None and not ropeway.empty:
+        keep = [
+            "ropeway_name",
+            "line",
+            "vehicle_capacity",
+            "saturated_hourly_capacity",
+            "platform_instant_capacity",
+            "queue_limit_min",
+            "operating_derate_ratio",
+            "ropeway_exposure_index",
+        ]
+        temp = ropeway[[col for col in keep if col in ropeway]].copy()
+        temp.insert(0, "profile_type", "ropeway")
+        parts.append(temp)
+    if not parts:
+        return pd.DataFrame(columns=["profile_type"])
+    return pd.concat(parts, ignore_index=True, sort=False)
 
 
 def run_baseline(config: ModelConfig) -> dict[str, Path]:
@@ -17,7 +51,16 @@ def run_baseline(config: ModelConfig) -> dict[str, Path]:
     security = load_security_data(config.data_dir)
     rail = load_rail_data(config.data_dir)
     ticket = load_ticket_aggregates(config.data_dir) if config.use_ticket_features else None
-    frame = build_feature_frame(security, rail, config.horizons, ticket_df=ticket)
+    facility = load_facility_capacity(config.data_dir) if config.use_facility_features else None
+    ropeway = load_ropeway_capacity(config.data_dir) if config.use_facility_features else None
+    frame = build_feature_frame(
+        security,
+        rail,
+        config.horizons,
+        ticket_df=ticket,
+        facility_df=facility,
+        ropeway_df=ropeway,
+    )
 
     target_cols = []
     for horizon in config.horizons:
@@ -41,19 +84,23 @@ def run_baseline(config: ModelConfig) -> dict[str, Path]:
         metrics_rows.append(metric)
     metrics = pd.DataFrame(metrics_rows)
     summary = risk_summary(scored, config.horizons)
+    profile = _capacity_profile(facility, ropeway)
 
     prediction_path = config.output_dir / "predictions.csv"
     metrics_path = config.output_dir / "metrics.csv"
     summary_path = config.output_dir / "risk_summary.csv"
     feature_manifest_path = config.output_dir / "feature_manifest.csv"
+    capacity_profile_path = config.output_dir / "capacity_profile.csv"
     scored.to_csv(prediction_path, index=False, encoding="utf-8-sig")
     metrics.to_csv(metrics_path, index=False, encoding="utf-8-sig")
     summary.to_csv(summary_path, index=False, encoding="utf-8-sig")
     pd.DataFrame({"feature": cols}).to_csv(feature_manifest_path, index=False, encoding="utf-8-sig")
+    profile.to_csv(capacity_profile_path, index=False, encoding="utf-8-sig")
 
     return {
         "predictions": prediction_path,
         "metrics": metrics_path,
         "risk_summary": summary_path,
         "feature_manifest": feature_manifest_path,
+        "capacity_profile": capacity_profile_path,
     }

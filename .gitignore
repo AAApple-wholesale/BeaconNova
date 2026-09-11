@@ -16,3 +16,6 @@ tmp/
 outputs/baseline/predictions.csv
 outputs/baseline_smoke/predictions.csv
 outputs/baseline_v0_2/predictions.csv
+outputs/baseline_v0_3/predictions.csv
+outputs/baseline_v0_3_smoke/predictions.csv
+

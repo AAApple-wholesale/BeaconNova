@@ -1,4 +1,6 @@
-"""BeaconNova baseline model package."""
+﻿"""BeaconNova baseline model package."""
+
+__version__ = "0.3.0"
 
 __all__ = [
     "config",
@@ -8,4 +10,3 @@ __all__ = [
     "scoring",
     "pipeline",
 ]
-

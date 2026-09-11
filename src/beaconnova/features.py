@@ -10,6 +10,29 @@ NATIONAL_DAY_2025 = pd.date_range("2025-10-01", "2025-10-08", freq="D")
 MAKEUP_WORKDAYS_2025 = pd.to_datetime(["2025-09-28", "2025-10-11"])
 
 
+def _safe_divide(numerator: pd.Series | float, denominator: float) -> pd.Series | float:
+    if denominator <= 0:
+        if isinstance(numerator, pd.Series):
+            return pd.Series(0.0, index=numerator.index)
+        return 0.0
+    return numerator / denominator
+
+
+def _summary_value(df: pd.DataFrame | None, column: str, default: float = 0.0, agg: str = "sum") -> float:
+    if df is None or df.empty or column not in df:
+        return default
+    values = pd.to_numeric(df[column], errors="coerce").dropna()
+    if values.empty:
+        return default
+    if agg == "min":
+        return float(values.min())
+    if agg == "max":
+        return float(values.max())
+    if agg == "mean":
+        return float(values.mean())
+    return float(values.sum())
+
+
 def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     dt = out["datetime"]
@@ -80,8 +103,18 @@ def add_gate_context_features(df: pd.DataFrame) -> pd.DataFrame:
         )
     )
     out = out.merge(gate, on=["datetime", "security_gate"], how="left")
+    system = (
+        out.groupby("datetime", as_index=False)
+        .agg(
+            system_person_count=("total_person_count", "sum"),
+            system_wait_mean=("avg_queue_wait_min", "mean"),
+            system_bag_count=("total_bag_check_num", "sum"),
+        )
+    )
+    out = out.merge(system, on="datetime", how="left")
     out["channel_load_share"] = out["total_person_count"] / out["gate_person_count"].replace(0, np.nan)
-    out["channel_load_share"] = out["channel_load_share"].fillna(0.0)
+    out["gate_system_share"] = out["gate_person_count"] / out["system_person_count"].replace(0, np.nan)
+    out[["channel_load_share", "gate_system_share"]] = out[["channel_load_share", "gate_system_share"]].fillna(0.0)
     return out
 
 
@@ -104,6 +137,7 @@ def add_ticket_features(security_df: pd.DataFrame, ticket_df: pd.DataFrame | Non
         out["ticket_count"] = 0.0
         out["ticket_count_30min"] = 0.0
         out["ticket_count_60min"] = 0.0
+        out["ticket_count_day_cum"] = 0.0
         return out
     timeline = pd.DataFrame({"datetime": sorted(out["datetime"].dropna().unique())})
     ticket = timeline.merge(ticket_df, on="datetime", how="left").fillna(0.0).sort_values("datetime")
@@ -113,6 +147,61 @@ def add_ticket_features(security_df: pd.DataFrame, ticket_df: pd.DataFrame | Non
     share_cols = [c for c in ticket.columns if c.endswith("_share")]
     keep_cols = ["datetime", "ticket_count", "ticket_count_30min", "ticket_count_60min", "ticket_count_day_cum"] + share_cols
     return out.merge(ticket[keep_cols], on="datetime", how="left").fillna(0.0)
+
+
+def add_facility_features(
+    security_df: pd.DataFrame,
+    facility_df: pd.DataFrame | None = None,
+    ropeway_df: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    """Project static carrying-capacity tables into dynamic pressure features."""
+    out = security_df.copy()
+    facility_instant = _summary_value(facility_df, "instant_capacity")
+    facility_hourly = _summary_value(facility_df, "hourly_capacity")
+    facility_bottleneck = _summary_value(facility_df, "instant_capacity", agg="min")
+    facility_exposure = _summary_value(facility_df, "weather_exposure_index", agg="mean")
+    facility_bottleneck_risk = _summary_value(facility_df, "bottleneck_risk_index", agg="mean")
+    facility_dwell = _summary_value(facility_df, "max_dwell_min", agg="mean")
+    ropeway_hourly = _summary_value(ropeway_df, "saturated_hourly_capacity")
+    ropeway_platform = _summary_value(ropeway_df, "platform_instant_capacity")
+    ropeway_queue_limit = _summary_value(ropeway_df, "queue_limit_min", agg="mean")
+    ropeway_derate = _summary_value(ropeway_df, "operating_derate_ratio", agg="mean")
+    ropeway_exposure = _summary_value(ropeway_df, "ropeway_exposure_index", agg="mean")
+
+    out["facility_total_instant_capacity"] = facility_instant
+    out["facility_total_hourly_capacity"] = facility_hourly
+    out["facility_min_instant_capacity"] = facility_bottleneck
+    out["facility_weather_exposure_index"] = facility_exposure
+    out["facility_bottleneck_risk_index"] = facility_bottleneck_risk
+    out["facility_avg_dwell_min"] = facility_dwell
+    out["ropeway_total_hourly_capacity"] = ropeway_hourly
+    out["ropeway_total_platform_capacity"] = ropeway_platform
+    out["ropeway_avg_queue_limit_min"] = ropeway_queue_limit
+    out["ropeway_operating_derate_ratio"] = ropeway_derate
+    out["ropeway_exposure_index"] = ropeway_exposure
+
+    out["security_hourly_flow_est"] = out["system_person_count"].fillna(0.0) * 12.0
+    out["facility_hourly_pressure"] = _safe_divide(out["security_hourly_flow_est"], facility_hourly)
+    out["facility_instant_pressure"] = _safe_divide(out["system_person_count"].fillna(0.0), facility_instant)
+    out["facility_bottleneck_pressure"] = _safe_divide(out["system_person_count"].fillna(0.0), facility_bottleneck)
+    out["ticket_facility_hourly_pressure"] = _safe_divide(out.get("ticket_count_60min", pd.Series(0.0, index=out.index)), facility_hourly)
+    out["rail_ropeway_hourly_pressure"] = _safe_divide(out.get("rail_passengers_60min", pd.Series(0.0, index=out.index)), ropeway_hourly)
+    out["rail_ropeway_platform_pressure"] = _safe_divide(out.get("rail_passengers_30min", pd.Series(0.0, index=out.index)), ropeway_platform)
+    out["ticket_ropeway_pressure"] = _safe_divide(out.get("ticket_count_60min", pd.Series(0.0, index=out.index)), ropeway_hourly)
+
+    pressure_cols = [
+        "facility_hourly_pressure",
+        "facility_instant_pressure",
+        "facility_bottleneck_pressure",
+        "ticket_facility_hourly_pressure",
+        "rail_ropeway_hourly_pressure",
+        "rail_ropeway_platform_pressure",
+        "ticket_ropeway_pressure",
+    ]
+    out[pressure_cols] = out[pressure_cols].replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    for col in pressure_cols:
+        out[col] = out[col].clip(lower=0.0)
+    return out
 
 
 def add_targets(df: pd.DataFrame, horizons: tuple[int, ...]) -> pd.DataFrame:
@@ -129,12 +218,15 @@ def build_feature_frame(
     rail_df: pd.DataFrame,
     horizons: tuple[int, ...],
     ticket_df: pd.DataFrame | None = None,
+    facility_df: pd.DataFrame | None = None,
+    ropeway_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     df = add_time_features(security_df)
     df = add_gate_context_features(df)
     df = add_security_history_features(df)
     df = add_rail_features(df, rail_df)
     df = add_ticket_features(df, ticket_df)
+    df = add_facility_features(df, facility_df, ropeway_df)
     df = add_targets(df, horizons)
     return df
 
