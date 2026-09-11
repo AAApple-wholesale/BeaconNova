@@ -1,0 +1,18 @@
+﻿# Python caches
+__pycache__/
+*.py[cod]
+
+# Temporary files
+tmp/
+*.tmp
+
+# Raw competition data is large and should be stored outside git or via Git LFS.
+赛题五基于多源数据融合的文旅场景舒适度评估与风险超前预警模型与分析0805/
+
+# Local editor state
+.vscode/
+
+# Optional heavy/generated prediction dumps can be regenerated.
+outputs/baseline/predictions.csv
+outputs/baseline_smoke/predictions.csv
+outputs/baseline_v0_2/predictions.csv
