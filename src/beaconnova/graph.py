@@ -7,72 +7,159 @@ import pandas as pd
 
 
 TARGET_TEMPLATE = ["person_h{h}", "wait_h{h}"]
+LAG_WINDOWS = (1, 2, 3, 6, 12, 18, 24, 36)
+ROLLING_WINDOWS = (3, 6, 12, 18, 24, 36)
+PEAK_WINDOWS = (6, 12, 24, 36)
+PROPAGATION_LAGS = (1, 3, 6, 12)
 TIME_FEATURES = [
     "hour",
     "minute",
     "dayofweek",
     "month",
+    "dayofyear",
     "is_weekend",
     "slot_5min",
+    "minute_of_day",
     "sin_slot",
     "cos_slot",
+    "sin_week",
+    "cos_week",
+    "is_opening_ramp",
+    "is_morning_peak",
+    "is_midday_peak",
+    "is_afternoon_peak",
+    "is_closing_period",
+    "is_business_hour",
+    "peak_period_code",
     "is_holiday",
     "is_makeup_workday",
     "is_effective_weekend",
+    "is_saturday",
+    "is_sunday",
+    "is_friday",
+    "is_monday",
     "is_summer_vacation",
     "holiday_seq",
     "days_to_holiday",
     "days_since_holiday",
+    "is_pre_holiday_1d",
+    "is_pre_holiday_3d",
+    "is_post_holiday_1d",
+    "is_post_holiday_3d",
+    "is_holiday_adjacent",
+    "holiday_phase_sin",
+    "holiday_phase_cos",
+    "days_to_weekend",
+    "weekend_tail",
+    "weekend_ramp",
+    "calendar_demand_weight",
 ]
-SECURITY_FEATURES = [
+SECURITY_BASE_FEATURES = [
     "total_person_count",
     "avg_queue_wait_min",
     "total_bag_check_num",
-    "total_person_count_lag_1",
-    "total_person_count_lag_2",
-    "total_person_count_lag_3",
-    "total_person_count_lag_6",
-    "total_person_count_lag_12",
-    "avg_queue_wait_min_lag_1",
-    "avg_queue_wait_min_lag_2",
-    "avg_queue_wait_min_lag_3",
-    "avg_queue_wait_min_lag_6",
-    "avg_queue_wait_min_lag_12",
-    "total_bag_check_num_lag_1",
-    "total_bag_check_num_lag_6",
-    "total_person_count_roll_mean_3",
-    "total_person_count_roll_mean_6",
-    "total_person_count_roll_mean_12",
-    "avg_queue_wait_min_roll_mean_3",
-    "avg_queue_wait_min_roll_mean_6",
-    "avg_queue_wait_min_roll_mean_12",
-    "person_diff_1",
-    "wait_diff_1",
     "gate_person_count",
     "gate_wait_mean",
+    "gate_wait_max",
     "gate_bag_count",
+    "gate_channel_count",
     "system_person_count",
     "system_wait_mean",
+    "system_wait_max",
     "system_bag_count",
     "channel_load_share",
     "gate_system_share",
+    "channel_wait_gap",
+    "gate_wait_gap",
+    "gate_flow_intensity",
 ]
+SECURITY_HISTORY_BASES = ["total_person_count", "avg_queue_wait_min", "total_bag_check_num"]
+SECURITY_LAG_FEATURES = [f"{col}_lag_{lag}" for col in SECURITY_HISTORY_BASES for lag in LAG_WINDOWS]
+SECURITY_ROLLING_FEATURES = [
+    f"{col}_roll_{stat}_{window}"
+    for col in SECURITY_HISTORY_BASES
+    for window in ROLLING_WINDOWS
+    for stat in ("mean", "max", "min", "std")
+]
+SECURITY_PEAK_FEATURES = [
+    f"{col}_{name}_{window}"
+    for col in SECURITY_HISTORY_BASES
+    for window in PEAK_WINDOWS
+    for name in ("roll_q90", "peak_gap", "peak_ratio", "above_q90")
+]
+SECURITY_DERIVED_FEATURES = [
+    "person_diff_1",
+    "person_diff_3",
+    "person_diff_6",
+    "wait_diff_1",
+    "wait_diff_3",
+    "wait_diff_6",
+    "bag_diff_1",
+    "person_momentum_30min",
+    "person_momentum_60min",
+    "wait_momentum_30min",
+    "wait_momentum_60min",
+    "wait_accel_15min",
+    "wait_accel_30min",
+    "bag_per_person",
+    "wait_per_person",
+    "wait_level_x_momentum_30min",
+]
+CONTEXT_PROPAGATION_BASES = [
+    "gate_person_count",
+    "gate_wait_mean",
+    "gate_wait_max",
+    "system_person_count",
+    "system_wait_mean",
+    "system_wait_max",
+]
+CONGESTION_PROPAGATION_FEATURES = [f"{col}_lag_{lag}" for col in CONTEXT_PROPAGATION_BASES for lag in PROPAGATION_LAGS] + [
+    f"{col}_roll_{stat}_{window}"
+    for col in CONTEXT_PROPAGATION_BASES
+    for stat, window in (("mean", 6), ("max", 12))
+] + [
+    f"{name}_lag_{lag}"
+    for lag in PROPAGATION_LAGS
+    for name in (
+        "upstream_gate_person",
+        "upstream_gate_wait",
+        "upstream_system_person",
+        "upstream_system_wait",
+        "propagated_person_pressure",
+        "propagated_wait_pressure",
+        "relative_wait_pressure",
+    )
+]
+SECURITY_FEATURES = (
+    SECURITY_BASE_FEATURES
+    + SECURITY_LAG_FEATURES
+    + SECURITY_ROLLING_FEATURES
+    + SECURITY_PEAK_FEATURES
+    + SECURITY_DERIVED_FEATURES
+    + CONGESTION_PROPAGATION_FEATURES
+)
 EXOG_FEATURES = [
     "rail_passengers",
     "rail_capacity",
     "rail_load_ratio",
     "rail_passengers_30min",
     "rail_passengers_60min",
+    "rail_passengers_120min",
+    "rail_passengers_diff_30min",
     "rail_load_ratio_60min",
     "ticket_count",
     "ticket_count_30min",
     "ticket_count_60min",
+    "ticket_count_120min",
     "ticket_count_day_cum",
+    "ticket_count_diff_30min",
     "facility_hourly_pressure",
     "facility_instant_pressure",
     "facility_bottleneck_pressure",
     "ticket_facility_hourly_pressure",
+    "ticket_facility_120min_pressure",
     "rail_ropeway_hourly_pressure",
+    "rail_ropeway_120min_pressure",
     "rail_ropeway_platform_pressure",
     "ticket_ropeway_pressure",
     "weather_temp_c",
@@ -90,6 +177,21 @@ EXOG_FEATURES = [
     "weather_wind_stress",
     "weather_comfort_penalty",
     "weather_is_proxy",
+    "weather_rain_1h",
+    "weather_rain_3h",
+    "weather_rain_6h",
+    "weather_temp_diff_1h",
+    "weather_temp_diff_3h",
+    "weather_temp_diff_6h",
+    "weather_apparent_temp_diff_1h",
+    "weather_wind_diff_1h",
+    "weather_wind_diff_3h",
+    "weather_wind_diff_6h",
+    "weather_penalty_diff_1h",
+    "weather_penalty_diff_3h",
+    "weather_rain_start_1h",
+    "weather_rain_intensify_1h",
+    "weather_abrupt_change_score",
 ]
 STATIC_FEATURES = [
     "effective_area_sqm",

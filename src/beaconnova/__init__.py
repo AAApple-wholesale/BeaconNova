@@ -1,6 +1,6 @@
 ﻿"""BeaconNova scenic comfort and risk forecasting package."""
 
-__version__ = "0.8.0"
+__version__ = "0.10.0"
 
 __all__ = [
     "config",
@@ -11,6 +11,9 @@ __all__ = [
     "graph_pipeline",
     "topology",
     "calibration",
+    "ensemble",
+    "ensemble_pipeline",
+    "wait_specialist",
     "temporal_graph_model",
     "temporal_graph_pipeline",
     "strategy",
@@ -19,4 +22,5 @@ __all__ = [
     "scoring",
     "pipeline",
 ]
+
 

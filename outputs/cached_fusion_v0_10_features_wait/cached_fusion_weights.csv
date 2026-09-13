@@ -1,0 +1,11 @@
+﻿target,source,mean_weight,min_weight,max_weight
+target_person_h6,gcn,0.56880593,0.14830056,0.9062171
+target_person_h6,tcn_gcn,0.43119502,0.09378284,0.8516994
+target_wait_h6,gcn,0.0,0.0,0.0
+target_wait_h6,tcn_gcn,0.0,0.0,0.0
+target_wait_h6,wait_specialist,1.0,1.0,1.0
+target_person_h12,gcn,0.55074996,0.18072386,0.9434922
+target_person_h12,tcn_gcn,0.4492491,0.05650783,0.81927615
+target_wait_h12,gcn,0.0,0.0,0.0
+target_wait_h12,tcn_gcn,0.0,0.0,0.0
+target_wait_h12,wait_specialist,1.0,1.0,1.0

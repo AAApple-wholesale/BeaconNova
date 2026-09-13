@@ -1,0 +1,6 @@
+﻿key,value
+meta_train_rows,5949
+holdout_rows,11988
+meta_train_days,7
+device,cuda
+source_models,"gcn,tcn_gcn"
