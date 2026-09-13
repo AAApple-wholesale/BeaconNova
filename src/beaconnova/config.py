@@ -15,6 +15,7 @@ ROPEWAY_FILE = "南北索道基本情况.xls"
 OFFICIAL_MAP_FILE = "手绘官方导览图.jpg"
 USER_MAP_FILE = "网友导览图.jpg"
 PROBLEM_DOC_FILE = "赛题五.docx"
+WEATHER_FILE = "weather.csv"
 
 
 @dataclass(frozen=True)
@@ -28,4 +29,6 @@ class ModelConfig:
     random_state: int = 42
     use_ticket_features: bool = True
     use_facility_features: bool = True
+    use_weather_features: bool = True
+
 

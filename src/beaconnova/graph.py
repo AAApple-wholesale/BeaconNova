@@ -75,6 +75,21 @@ EXOG_FEATURES = [
     "rail_ropeway_hourly_pressure",
     "rail_ropeway_platform_pressure",
     "ticket_ropeway_pressure",
+    "weather_temp_c",
+    "weather_apparent_temp_c",
+    "weather_humidity",
+    "weather_rain_mm",
+    "weather_precipitation_mm",
+    "weather_rain_flag",
+    "weather_wind_speed_mps",
+    "weather_wind_gust_mps",
+    "weather_code",
+    "weather_cloud_cover",
+    "weather_heat_stress",
+    "weather_cold_stress",
+    "weather_wind_stress",
+    "weather_comfort_penalty",
+    "weather_is_proxy",
 ]
 STATIC_FEATURES = [
     "effective_area_sqm",
@@ -405,5 +420,8 @@ def split_graph_dataset(dataset: GraphDataset, test_days: int) -> tuple[np.ndarr
     train_idx = np.flatnonzero(dataset.times < split_date)
     test_idx = np.flatnonzero(dataset.times >= split_date)
     return train_idx, test_idx
+
+
+
 
 

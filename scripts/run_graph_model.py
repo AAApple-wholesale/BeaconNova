@@ -28,6 +28,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--weight-decay", type=float, default=1e-4, help="AdamW weight decay.")
     parser.add_argument("--patience", type=int, default=5, help="Early-stopping patience.")
     parser.add_argument("--device", default="auto", help="Training device: auto, cpu, cuda, cuda:0, ...")
+    parser.add_argument("--adaptive-adj-rank", type=int, default=8, help="Rank of learnable adaptive adjacency embeddings.")
+    parser.add_argument("--adaptive-adj-weight", type=float, default=0.12, help="Blend weight for learnable adaptive adjacency.")
+    parser.add_argument("--skip-weather", action="store_true", help="Skip weather context features.")
     return parser.parse_args()
 
 
@@ -39,6 +42,7 @@ def main() -> None:
         test_days=args.test_days,
         use_ticket_features=True,
         use_facility_features=True,
+        use_weather_features=not args.skip_weather,
     )
     train_config = GraphTrainConfig(
         epochs=args.epochs,
@@ -49,6 +53,8 @@ def main() -> None:
         weight_decay=args.weight_decay,
         patience=args.patience,
         device=args.device,
+        adaptive_adj_rank=args.adaptive_adj_rank,
+        adaptive_adj_weight=args.adaptive_adj_weight,
     )
     outputs = run_graph_pipeline(GraphPipelineConfig(model=model_config, train=train_config, validation_days=args.validation_days))
     print("Graph model run completed.")
@@ -58,3 +64,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+

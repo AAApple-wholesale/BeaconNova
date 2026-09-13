@@ -1,0 +1,13 @@
+﻿key,value
+samples,19308
+sequence_length,12
+fit_sequences,16621
+validation_sequences,661
+test_sequences,1993
+nodes,24
+edges_directed,300
+edge_weight_mean,0.4124664566903477
+prediction_calibration,validation_ridge_linear
+features,112
+device,cuda
+train_config,"{'epochs': 24, 'batch_size': 384, 'hidden_dim': 128, 'sequence_length': 12, 'dropout': 0.08, 'learning_rate': 0.0007, 'weight_decay': 0.0001, 'random_state': 42, 'patience': 6, 'device': 'auto', 'adaptive_adj_rank': 8, 'adaptive_adj_weight': 0.08}"

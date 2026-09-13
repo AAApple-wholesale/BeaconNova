@@ -20,6 +20,8 @@ class GraphTrainConfig:
     random_state: int = 42
     patience: int = 5
     device: str = "auto"
+    adaptive_adj_rank: int = 8
+    adaptive_adj_weight: float = 0.12
 
 
 class GraphConvolution(nn.Module):
@@ -33,11 +35,24 @@ class GraphConvolution(nn.Module):
 
 
 class ScenicGCN(nn.Module):
-    """Small dense-adjacency GCN for the scenic-area operational graph."""
+    """Dense GCN with a small adaptive-adjacency residual branch."""
 
-    def __init__(self, in_features: int, out_features: int, hidden_dim: int = 96, dropout: float = 0.12) -> None:
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        hidden_dim: int = 96,
+        dropout: float = 0.12,
+        node_count: int = 1,
+        adaptive_adj_rank: int = 8,
+        adaptive_adj_weight: float = 0.12,
+    ) -> None:
         super().__init__()
+        rank = max(1, min(adaptive_adj_rank, node_count))
+        self.adaptive_adj_weight = float(adaptive_adj_weight)
         self.input = nn.Linear(in_features, hidden_dim)
+        self.node_emb_source = nn.Parameter(torch.randn(node_count, rank) * 0.02)
+        self.node_emb_target = nn.Parameter(torch.randn(rank, node_count) * 0.02)
         self.gcn1 = GraphConvolution(hidden_dim, hidden_dim)
         self.gcn2 = GraphConvolution(hidden_dim, hidden_dim)
         self.norm1 = nn.LayerNorm(hidden_dim)
@@ -50,7 +65,12 @@ class ScenicGCN(nn.Module):
             nn.Linear(hidden_dim, out_features),
         )
 
+    def _adjacency(self, adj: torch.Tensor) -> torch.Tensor:
+        adaptive = torch.softmax(torch.relu(self.node_emb_source @ self.node_emb_target), dim=1)
+        return (1.0 - self.adaptive_adj_weight) * adj + self.adaptive_adj_weight * adaptive
+
     def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
+        adj = self._adjacency(adj)
         h = torch.relu(self.input(x))
         h1 = torch.relu(self.norm1(self.gcn1(h, adj)))
         h = self.dropout(h + h1)
@@ -117,7 +137,15 @@ def train_graph_model(
     adj = torch.from_numpy(adjacency.astype(np.float32)).to(device)
     security_tensor = torch.tensor(security_indices, dtype=torch.long, device=device)
 
-    model = ScenicGCN(x.shape[-1], y.shape[-1], hidden_dim=config.hidden_dim, dropout=config.dropout).to(device)
+    model = ScenicGCN(
+        x.shape[-1],
+        y.shape[-1],
+        hidden_dim=config.hidden_dim,
+        dropout=config.dropout,
+        node_count=x.shape[1],
+        adaptive_adj_rank=config.adaptive_adj_rank,
+        adaptive_adj_weight=config.adaptive_adj_weight,
+    ).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
     loss_fn = nn.SmoothL1Loss()
     history = []

@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import pandas as pd
 
-from .config import FACILITY_FILE, OFFICIAL_MAP_FILE, PROBLEM_DOC_FILE, RAIL_FILE, ROPEWAY_FILE, SECURITY_FILE, TICKET_FILE, USER_MAP_FILE
+from .config import FACILITY_FILE, OFFICIAL_MAP_FILE, PROBLEM_DOC_FILE, RAIL_FILE, ROPEWAY_FILE, SECURITY_FILE, TICKET_FILE, USER_MAP_FILE, WEATHER_FILE
 
 
 def _parse_datetime(date_series: pd.Series, time_series: pd.Series) -> pd.Series:
@@ -235,3 +235,147 @@ def load_context_assets(data_dir: Path) -> pd.DataFrame:
         }
     )
     return pd.DataFrame(rows).fillna(0.0)
+
+
+def _normalize_weather_columns(df: pd.DataFrame) -> pd.DataFrame:
+    rename_map = {
+        "temperature": "weather_temp_c",
+        "temp": "weather_temp_c",
+        "temp_c": "weather_temp_c",
+        "apparent_temperature": "weather_apparent_temp_c",
+        "humidity": "weather_humidity",
+        "relative_humidity": "weather_humidity",
+        "rain": "weather_rain_mm",
+        "precipitation": "weather_rain_mm",
+        "wind_speed": "weather_wind_speed_mps",
+        "wind": "weather_wind_speed_mps",
+    }
+    out = df.rename(columns={col: rename_map.get(str(col).strip(), col) for col in df.columns}).copy()
+    if "datetime" not in out:
+        date_col = next((c for c in out.columns if str(c).lower() in {"date", "日期"}), None)
+        time_col = next((c for c in out.columns if str(c).lower() in {"time", "hour", "时间"}), None)
+        if date_col is not None and time_col is not None:
+            out["datetime"] = _parse_datetime(out[date_col], out[time_col])
+        elif date_col is not None:
+            out["datetime"] = pd.to_datetime(out[date_col], errors="coerce")
+    out["datetime"] = pd.to_datetime(out.get("datetime"), errors="coerce").dt.floor("5min")
+    out = out.dropna(subset=["datetime"]).copy()
+    numeric_cols = [
+        "weather_temp_c",
+        "weather_apparent_temp_c",
+        "weather_humidity",
+        "weather_rain_mm",
+        "weather_precipitation_mm",
+        "weather_wind_speed_mps",
+        "weather_wind_gust_mps",
+        "weather_code",
+        "weather_cloud_cover",
+    ]
+    for col in numeric_cols:
+        if col not in out:
+            out[col] = 0.0
+        out[col] = pd.to_numeric(out[col], errors="coerce").fillna(0.0)
+    if out["weather_humidity"].max() > 1.5:
+        out["weather_humidity"] = out["weather_humidity"] / 100.0
+    if (out["weather_apparent_temp_c"] == 0).all():
+        out["weather_apparent_temp_c"] = out["weather_temp_c"] + (out["weather_humidity"] - 0.5) * 4.0
+    out["weather_rain_mm"] = np.maximum(out["weather_rain_mm"], out["weather_precipitation_mm"])
+    out["weather_rain_flag"] = (out["weather_rain_mm"] > 0).astype(float)
+    out["weather_heat_stress"] = np.clip((out["weather_apparent_temp_c"] - 28.0) / 10.0, 0.0, 1.0)
+    out["weather_cold_stress"] = np.clip((5.0 - out["weather_apparent_temp_c"]) / 12.0, 0.0, 1.0)
+    out["weather_wind_stress"] = np.clip((out["weather_wind_speed_mps"] - 8.0) / 10.0, 0.0, 1.0)
+    out["weather_comfort_penalty"] = np.clip(
+        0.45 * out["weather_heat_stress"]
+        + 0.20 * out["weather_cold_stress"]
+        + 0.25 * out["weather_rain_flag"]
+        + 0.10 * out["weather_wind_stress"],
+        0.0,
+        1.0,
+    )
+    out["weather_is_proxy"] = 0.0
+    keep = [
+        "datetime",
+        "weather_temp_c",
+        "weather_apparent_temp_c",
+        "weather_humidity",
+        "weather_rain_mm",
+        "weather_precipitation_mm",
+        "weather_rain_flag",
+        "weather_wind_speed_mps",
+        "weather_wind_gust_mps",
+        "weather_code",
+        "weather_cloud_cover",
+        "weather_heat_stress",
+        "weather_cold_stress",
+        "weather_wind_stress",
+        "weather_comfort_penalty",
+        "weather_is_proxy",
+    ]
+    return out[keep].groupby("datetime", as_index=False).mean().sort_values("datetime")
+
+
+def _generate_weather_proxy(timeline: pd.Series) -> pd.DataFrame:
+    dt = pd.to_datetime(pd.Series(timeline).dropna().drop_duplicates()).dt.floor("5min").sort_values()
+    if dt.empty:
+        return pd.DataFrame(columns=["datetime"])
+    month_base = {
+        7: (29.0, 0.68, 0.24, 2.4),
+        8: (28.0, 0.70, 0.26, 2.2),
+        9: (23.0, 0.58, 0.14, 2.6),
+        10: (15.0, 0.48, 0.08, 2.8),
+        11: (6.0, 0.40, 0.04, 3.1),
+        12: (-2.0, 0.36, 0.03, 3.3),
+    }
+    rows = []
+    for value in dt:
+        base_temp, humidity, rain_prob, wind_base = month_base.get(int(value.month), (18.0, 0.50, 0.08, 2.6))
+        hour = value.hour + value.minute / 60.0
+        diurnal = 5.0 * np.sin(2 * np.pi * (hour - 8.0) / 24.0)
+        day_wave = 1.5 * np.sin(2 * np.pi * value.dayofyear / 17.0)
+        temp = base_temp + diurnal + day_wave
+        rain_seed = ((value.dayofyear * 17 + value.hour * 7 + value.minute) % 100) / 100.0
+        rain_flag = 1.0 if rain_seed < rain_prob else 0.0
+        rain_mm = rain_flag * (0.2 + 3.0 * rain_seed)
+        wind = wind_base + 1.2 * np.cos(2 * np.pi * (hour - 14.0) / 24.0)
+        apparent = temp + (humidity - 0.5) * 4.0 - rain_flag * 1.5
+        heat = float(np.clip((apparent - 28.0) / 10.0, 0.0, 1.0))
+        cold = float(np.clip((5.0 - apparent) / 12.0, 0.0, 1.0))
+        wind_stress = float(np.clip((wind - 8.0) / 10.0, 0.0, 1.0))
+        penalty = float(np.clip(0.45 * heat + 0.20 * cold + 0.25 * rain_flag + 0.10 * wind_stress, 0.0, 1.0))
+        rows.append(
+            {
+                "datetime": value,
+                "weather_temp_c": temp,
+                "weather_apparent_temp_c": apparent,
+                "weather_humidity": humidity,
+                "weather_rain_mm": rain_mm,
+                "weather_rain_flag": rain_flag,
+                "weather_wind_speed_mps": wind,
+                "weather_heat_stress": heat,
+                "weather_cold_stress": cold,
+                "weather_wind_stress": wind_stress,
+                "weather_comfort_penalty": penalty,
+                "weather_is_proxy": 1.0,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def load_weather_context(data_dir: Path, timeline: pd.Series | None = None) -> pd.DataFrame:
+    """Load optional weather data, falling back to a deterministic seasonal proxy.
+
+    If `weather.csv` is placed in the data directory, the loader accepts either a
+    `datetime` column or `date` + `time` columns. Without an external file, this
+    produces replaceable proxy features so the comfort model can already expose
+    weather-related effects and downstream interfaces.
+    """
+    path = data_dir / WEATHER_FILE
+    if path.exists():
+        try:
+            return _normalize_weather_columns(pd.read_csv(path, encoding="utf-8-sig"))
+        except UnicodeDecodeError:
+            return _normalize_weather_columns(pd.read_csv(path, encoding="gbk"))
+    if timeline is None:
+        return pd.DataFrame(columns=["datetime"])
+    return _generate_weather_proxy(timeline)
+

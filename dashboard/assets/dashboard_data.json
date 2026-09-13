@@ -1,0 +1,601 @@
+{
+  "project": "BeaconNova",
+  "generated_at": "2026-09-13 18:58:22",
+  "models": [
+    {
+      "name": "Optimized adaptive GCN",
+      "path": "D:\\vscode\\BeaconNova\\outputs\\graph_v0_6_optimized",
+      "metrics": [
+        {
+          "target": "target_person_h6",
+          "horizon_min": 30,
+          "mae": 2.5884,
+          "rmse": 3.1598,
+          "wape": 0.2923,
+          "rows": 18036
+        },
+        {
+          "target": "target_wait_h6",
+          "horizon_min": 30,
+          "mae": 0.4627,
+          "rmse": 0.5617,
+          "wape": 0.3199,
+          "rows": 18036
+        },
+        {
+          "target": "target_person_h12",
+          "horizon_min": 60,
+          "mae": 2.5352,
+          "rmse": 3.0535,
+          "wape": 0.286,
+          "rows": 18036
+        },
+        {
+          "target": "target_wait_h12",
+          "horizon_min": 60,
+          "mae": 0.454,
+          "rmse": 0.5487,
+          "wape": 0.3137,
+          "rows": 18036
+        }
+      ],
+      "risk": [
+        {
+          "horizon_min": 30,
+          "label": "蓝色",
+          "count": 13527
+        },
+        {
+          "horizon_min": 30,
+          "label": "黄色",
+          "count": 2705
+        },
+        {
+          "horizon_min": 30,
+          "label": "橙色",
+          "count": 1262
+        },
+        {
+          "horizon_min": 30,
+          "label": "红色",
+          "count": 542
+        },
+        {
+          "horizon_min": 30,
+          "label": "主导因素:容量压力",
+          "count": 16671
+        },
+        {
+          "horizon_min": 30,
+          "label": "主导因素:增长压力",
+          "count": 1365
+        },
+        {
+          "horizon_min": 60,
+          "label": "蓝色",
+          "count": 13527
+        },
+        {
+          "horizon_min": 60,
+          "label": "黄色",
+          "count": 2705
+        },
+        {
+          "horizon_min": 60,
+          "label": "橙色",
+          "count": 1262
+        },
+        {
+          "horizon_min": 60,
+          "label": "红色",
+          "count": 542
+        },
+        {
+          "horizon_min": 60,
+          "label": "主导因素:容量压力",
+          "count": 16180
+        },
+        {
+          "horizon_min": 60,
+          "label": "主导因素:增长压力",
+          "count": 1856
+        }
+      ],
+      "config": {
+        "samples": "19308",
+        "fit_samples": "16632",
+        "validation_samples": "672",
+        "test_samples": "2004",
+        "nodes": "24",
+        "edges_directed": "300",
+        "edge_weight_mean": "0.4124664566903477",
+        "prediction_calibration": "validation_ridge_linear",
+        "features": "112",
+        "device": "cuda",
+        "train_config": "{'epochs': 24, 'batch_size': 1024, 'hidden_dim': 128, 'dropout': 0.08, 'learning_rate': 0.001, 'weight_decay': 0.0001, 'random_state': 42, 'patience': 6, 'device': 'auto', 'adaptive_adj_rank': 8, 'adaptive_adj_weight': 0.08}"
+      }
+    },
+    {
+      "name": "Optimized TCN-GCN",
+      "path": "D:\\vscode\\BeaconNova\\outputs\\temporal_graph_v0_7_optimized",
+      "metrics": [
+        {
+          "target": "target_person_h6",
+          "horizon_min": 30,
+          "mae": 2.6027,
+          "rmse": 3.1527,
+          "wape": 0.2939,
+          "rows": 17937
+        },
+        {
+          "target": "target_wait_h6",
+          "horizon_min": 30,
+          "mae": 0.4639,
+          "rmse": 0.5602,
+          "wape": 0.3207,
+          "rows": 17937
+        },
+        {
+          "target": "target_person_h12",
+          "horizon_min": 60,
+          "mae": 2.5532,
+          "rmse": 3.0838,
+          "wape": 0.2886,
+          "rows": 17937
+        },
+        {
+          "target": "target_wait_h12",
+          "horizon_min": 60,
+          "mae": 0.4553,
+          "rmse": 0.5501,
+          "wape": 0.3149,
+          "rows": 17937
+        }
+      ],
+      "risk": [
+        {
+          "horizon_min": 30,
+          "label": "蓝色",
+          "count": 13452
+        },
+        {
+          "horizon_min": 30,
+          "label": "黄色",
+          "count": 2691
+        },
+        {
+          "horizon_min": 30,
+          "label": "橙色",
+          "count": 1255
+        },
+        {
+          "horizon_min": 30,
+          "label": "红色",
+          "count": 539
+        },
+        {
+          "horizon_min": 30,
+          "label": "主导因素:容量压力",
+          "count": 16394
+        },
+        {
+          "horizon_min": 30,
+          "label": "主导因素:增长压力",
+          "count": 1543
+        },
+        {
+          "horizon_min": 60,
+          "label": "蓝色",
+          "count": 13452
+        },
+        {
+          "horizon_min": 60,
+          "label": "黄色",
+          "count": 2691
+        },
+        {
+          "horizon_min": 60,
+          "label": "橙色",
+          "count": 1255
+        },
+        {
+          "horizon_min": 60,
+          "label": "红色",
+          "count": 539
+        },
+        {
+          "horizon_min": 60,
+          "label": "主导因素:容量压力",
+          "count": 15980
+        },
+        {
+          "horizon_min": 60,
+          "label": "主导因素:增长压力",
+          "count": 1957
+        }
+      ],
+      "config": {
+        "samples": "19308",
+        "sequence_length": "12",
+        "fit_sequences": "16621",
+        "validation_sequences": "661",
+        "test_sequences": "1993",
+        "nodes": "24",
+        "edges_directed": "300",
+        "edge_weight_mean": "0.4124664566903477",
+        "prediction_calibration": "validation_ridge_linear",
+        "features": "112",
+        "device": "cuda",
+        "train_config": "{'epochs': 24, 'batch_size': 384, 'hidden_dim': 128, 'sequence_length': 12, 'dropout': 0.08, 'learning_rate': 0.0007, 'weight_decay': 0.0001, 'random_state': 42, 'patience': 6, 'device': 'auto', 'adaptive_adj_rank': 8, 'adaptive_adj_weight': 0.08}"
+      }
+    }
+  ],
+  "strategy": {
+    "summary": [
+      {
+        "strategy": "分流引导至低负载游线",
+        "interventions": 4509,
+        "avg_risk_score_delta": 0.0602,
+        "avg_comfort_gain": 6.0165,
+        "avg_wait_reduction_min": 0.2132,
+        "baseline_orange_red": 1804,
+        "adjusted_orange_red": 451,
+        "orange_red_reduction": 1353
+      }
+    ],
+    "examples": [
+      {
+        "datetime": "2025-12-27 08:05:00",
+        "node_id": "前山安检口/前山3通道",
+        "strategy": "分流引导至低负载游线",
+        "baseline_level": "红色",
+        "adjusted_level": "红色",
+        "risk_delta": 0.0698,
+        "comfort_gain": 6.9827,
+        "wait_reduction_min": 0.2556
+      },
+      {
+        "datetime": "2025-12-13 08:00:00",
+        "node_id": "前山安检口/前山2通道",
+        "strategy": "分流引导至低负载游线",
+        "baseline_level": "橙色",
+        "adjusted_level": "黄色",
+        "risk_delta": 0.0698,
+        "comfort_gain": 6.9792,
+        "wait_reduction_min": 0.2534
+      },
+      {
+        "datetime": "2025-12-13 08:00:00",
+        "node_id": "前山安检口/前山1通道",
+        "strategy": "分流引导至低负载游线",
+        "baseline_level": "橙色",
+        "adjusted_level": "黄色",
+        "risk_delta": 0.0697,
+        "comfort_gain": 6.9723,
+        "wait_reduction_min": 0.2699
+      },
+      {
+        "datetime": "2025-12-13 08:00:00",
+        "node_id": "前山安检口/前山3通道",
+        "strategy": "分流引导至低负载游线",
+        "baseline_level": "橙色",
+        "adjusted_level": "黄色",
+        "risk_delta": 0.0697,
+        "comfort_gain": 6.9694,
+        "wait_reduction_min": 0.2611
+      },
+      {
+        "datetime": "2025-12-13 10:05:00",
+        "node_id": "外餐安检口/外餐1通道",
+        "strategy": "分流引导至低负载游线",
+        "baseline_level": "红色",
+        "adjusted_level": "黄色",
+        "risk_delta": 0.0694,
+        "comfort_gain": 6.9422,
+        "wait_reduction_min": 0.2861
+      },
+      {
+        "datetime": "2025-12-22 08:00:00",
+        "node_id": "前山安检口/前山3通道",
+        "strategy": "分流引导至低负载游线",
+        "baseline_level": "橙色",
+        "adjusted_level": "蓝色",
+        "risk_delta": 0.0693,
+        "comfort_gain": 6.928,
+        "wait_reduction_min": 0.2553
+      },
+      {
+        "datetime": "2025-12-18 08:00:00",
+        "node_id": "外餐安检口/外餐3通道",
+        "strategy": "分流引导至低负载游线",
+        "baseline_level": "橙色",
+        "adjusted_level": "蓝色",
+        "risk_delta": 0.0692,
+        "comfort_gain": 6.9193,
+        "wait_reduction_min": 0.2492
+      },
+      {
+        "datetime": "2025-12-18 09:55:00",
+        "node_id": "前山安检口/前山2通道",
+        "strategy": "分流引导至低负载游线",
+        "baseline_level": "红色",
+        "adjusted_level": "红色",
+        "risk_delta": 0.0692,
+        "comfort_gain": 6.9159,
+        "wait_reduction_min": 0.2773
+      }
+    ]
+  },
+  "weather": {
+    "rows": 4416,
+    "start": "2025-07-01 00:00:00",
+    "end": "2025-12-31 23:00:00",
+    "source": "open-meteo-archive",
+    "weather_temp_c": {
+      "mean": 10.3126,
+      "max": 31.2,
+      "min": -15.1
+    },
+    "weather_apparent_temp_c": {
+      "mean": 9.0544,
+      "max": 35.3,
+      "min": -21.1
+    },
+    "weather_humidity": {
+      "mean": 0.6855,
+      "max": 1.0,
+      "min": 0.12
+    },
+    "weather_rain_mm": {
+      "mean": 0.1017,
+      "max": 12.1,
+      "min": 0.0
+    },
+    "weather_wind_speed_mps": {
+      "mean": 2.0582,
+      "max": 10.74,
+      "min": 0.0
+    },
+    "weather_comfort_penalty": {
+      "mean": 0.0989,
+      "max": 0.4885,
+      "min": 0.0
+    }
+  },
+  "top_edges": [
+    {
+      "source": "外餐安检口/外餐2通道",
+      "target": "外餐安检口/外餐3通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7128,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8475
+    },
+    {
+      "source": "外餐安检口/外餐3通道",
+      "target": "外餐安检口/外餐2通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7128,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8475
+    },
+    {
+      "source": "外餐安检口/外餐6通道",
+      "target": "外餐安检口/外餐2通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7121,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8472
+    },
+    {
+      "source": "外餐安检口/外餐2通道",
+      "target": "外餐安检口/外餐6通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7121,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8472
+    },
+    {
+      "source": "外餐安检口/外餐1通道",
+      "target": "外餐安检口/外餐4通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7119,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8472
+    },
+    {
+      "source": "外餐安检口/外餐4通道",
+      "target": "外餐安检口/外餐1通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7119,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8472
+    },
+    {
+      "source": "前山安检口/前山1通道",
+      "target": "前山安检口/前山2通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7118,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8471
+    },
+    {
+      "source": "前山安检口/前山2通道",
+      "target": "前山安检口/前山1通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7118,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8471
+    },
+    {
+      "source": "外餐安检口/外餐3通道",
+      "target": "外餐安检口/外餐6通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7101,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8465
+    },
+    {
+      "source": "外餐安检口/外餐6通道",
+      "target": "外餐安检口/外餐3通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7101,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8465
+    },
+    {
+      "source": "前山安检口/前山1通道",
+      "target": "前山安检口/前山3通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7088,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8461
+    },
+    {
+      "source": "前山安检口/前山3通道",
+      "target": "前山安检口/前山1通道",
+      "relation": "same_security_gate",
+      "prior_weight": 0.92,
+      "lag_corr": 0.7088,
+      "best_lag_5min": 0,
+      "calibrated_weight": 0.8461
+    }
+  ],
+  "hotspots": [
+    {
+      "datetime": "2025-12-19 09:00:00",
+      "node_id": "前山安检口/前山3通道",
+      "risk_level": "红色",
+      "risk_score": 0.434,
+      "comfort": 56.6,
+      "pred_wait": 2.82,
+      "pred_person": 15.74,
+      "driver": "增长压力"
+    },
+    {
+      "datetime": "2025-12-27 08:05:00",
+      "node_id": "前山安检口/前山3通道",
+      "risk_level": "红色",
+      "risk_score": 0.4272,
+      "comfort": 57.28,
+      "pred_wait": 2.42,
+      "pred_person": 15.86,
+      "driver": "增长压力"
+    },
+    {
+      "datetime": "2025-12-27 08:05:00",
+      "node_id": "前山安检口/前山1通道",
+      "risk_level": "红色",
+      "risk_score": 0.4237,
+      "comfort": 57.63,
+      "pred_wait": 2.35,
+      "pred_person": 15.61,
+      "driver": "容量压力"
+    },
+    {
+      "datetime": "2025-12-19 09:05:00",
+      "node_id": "前山安检口/前山2通道",
+      "risk_level": "红色",
+      "risk_score": 0.4206,
+      "comfort": 57.94,
+      "pred_wait": 2.59,
+      "pred_person": 14.45,
+      "driver": "增长压力"
+    },
+    {
+      "datetime": "2025-12-27 08:10:00",
+      "node_id": "前山安检口/前山3通道",
+      "risk_level": "红色",
+      "risk_score": 0.4206,
+      "comfort": 57.94,
+      "pred_wait": 2.38,
+      "pred_person": 15.44,
+      "driver": "增长压力"
+    },
+    {
+      "datetime": "2025-12-27 08:15:00",
+      "node_id": "前山安检口/前山1通道",
+      "risk_level": "红色",
+      "risk_score": 0.4206,
+      "comfort": 57.94,
+      "pred_wait": 2.33,
+      "pred_person": 14.72,
+      "driver": "增长压力"
+    },
+    {
+      "datetime": "2025-12-27 08:05:00",
+      "node_id": "外餐安检口/外餐5通道",
+      "risk_level": "红色",
+      "risk_score": 0.4192,
+      "comfort": 58.08,
+      "pred_wait": 2.34,
+      "pred_person": 14.68,
+      "driver": "增长压力"
+    },
+    {
+      "datetime": "2025-12-27 08:10:00",
+      "node_id": "前山安检口/前山1通道",
+      "risk_level": "红色",
+      "risk_score": 0.4192,
+      "comfort": 58.08,
+      "pred_wait": 2.34,
+      "pred_person": 15.31,
+      "driver": "容量压力"
+    },
+    {
+      "datetime": "2025-12-19 09:20:00",
+      "node_id": "前山安检口/前山1通道",
+      "risk_level": "红色",
+      "risk_score": 0.4178,
+      "comfort": 58.22,
+      "pred_wait": 2.45,
+      "pred_person": 14.0,
+      "driver": "增长压力"
+    },
+    {
+      "datetime": "2025-12-27 08:15:00",
+      "node_id": "前山安检口/前山3通道",
+      "risk_level": "红色",
+      "risk_score": 0.4176,
+      "comfort": 58.24,
+      "pred_wait": 2.29,
+      "pred_person": 14.77,
+      "driver": "增长压力"
+    },
+    {
+      "datetime": "2025-12-27 08:10:00",
+      "node_id": "外餐安检口/外餐6通道",
+      "risk_level": "红色",
+      "risk_score": 0.4172,
+      "comfort": 58.28,
+      "pred_wait": 2.17,
+      "pred_person": 13.98,
+      "driver": "容量压力"
+    },
+    {
+      "datetime": "2025-12-27 08:05:00",
+      "node_id": "外餐安检口/外餐6通道",
+      "risk_level": "红色",
+      "risk_score": 0.4167,
+      "comfort": 58.33,
+      "pred_wait": 2.27,
+      "pred_person": 14.34,
+      "driver": "增长压力"
+    }
+  ],
+  "assets": {
+    "official_map": "assets/official_map.jpg",
+    "user_map": "assets/user_map.jpg"
+  }
+}

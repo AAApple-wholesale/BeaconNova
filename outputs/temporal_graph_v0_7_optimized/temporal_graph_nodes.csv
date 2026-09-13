@@ -1,0 +1,25 @@
+﻿node_index,node_id,node_name,node_type,is_supervised_security_node
+0,前山安检口/前山1通道,前山安检口/前山1通道,security,True
+1,前山安检口/前山2通道,前山安检口/前山2通道,security,True
+2,前山安检口/前山3通道,前山安检口/前山3通道,security,True
+3,外餐安检口/外餐1通道,外餐安检口/外餐1通道,security,True
+4,外餐安检口/外餐2通道,外餐安检口/外餐2通道,security,True
+5,外餐安检口/外餐3通道,外餐安检口/外餐3通道,security,True
+6,外餐安检口/外餐4通道,外餐安检口/外餐4通道,security,True
+7,外餐安检口/外餐5通道,外餐安检口/外餐5通道,security,True
+8,外餐安检口/外餐6通道,外餐安检口/外餐6通道,security,True
+9,facility:北八楼・好汉坡制高点,北八楼・好汉坡制高点,facility,False
+10,facility:北索道入口平台,北索道入口平台,facility,False
+11,facility:北四楼・好汉石打卡点,北四楼・好汉石打卡点,facility,False
+12,facility:北门锁钥关城城楼,北门锁钥关城城楼,facility,False
+13,facility:北八至北九 S 弯长城,北八至北九 S 弯长城,facility,False
+14,facility:南索道入口平台,南索道入口平台,facility,False
+15,facility:南四楼南线全景机位,南四楼南线全景机位,facility,False
+16,facility:岔道城古炮展区,岔道城古炮展区,facility,False
+17,ropeway:北线索道（北八楼空中索道）,北线索道（北八楼空中索道）,ropeway,False
+18,ropeway:南线索道（南四楼地面缆车）,南线索道（南四楼地面缆车）,ropeway,False
+19,map:official,手绘官方导览图,map,False
+20,map:user,网友导览图,map,False
+21,doc:problem,赛题五说明文档,document,False
+22,global:ticket,票务全局信号,ticket,False
+23,global:rail,轨道交通全局信号,rail,False

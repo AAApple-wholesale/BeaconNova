@@ -153,6 +153,7 @@ def add_facility_features(
     security_df: pd.DataFrame,
     facility_df: pd.DataFrame | None = None,
     ropeway_df: pd.DataFrame | None = None,
+    weather_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Project static carrying-capacity tables into dynamic pressure features."""
     out = security_df.copy()
@@ -204,6 +205,51 @@ def add_facility_features(
     return out
 
 
+
+
+def add_weather_features(security_df: pd.DataFrame, weather_df: pd.DataFrame | None) -> pd.DataFrame:
+    out = security_df.copy()
+    weather_cols = [
+        "weather_temp_c",
+        "weather_apparent_temp_c",
+        "weather_humidity",
+        "weather_rain_mm",
+        "weather_precipitation_mm",
+        "weather_rain_flag",
+        "weather_wind_speed_mps",
+        "weather_wind_gust_mps",
+        "weather_code",
+        "weather_cloud_cover",
+        "weather_heat_stress",
+        "weather_cold_stress",
+        "weather_wind_stress",
+        "weather_comfort_penalty",
+        "weather_is_proxy",
+    ]
+    if weather_df is None or weather_df.empty:
+        for col in weather_cols:
+            out[col] = 0.0
+        out["weather_is_proxy"] = 1.0
+        return out
+    weather = weather_df.copy()
+    weather["datetime"] = pd.to_datetime(weather["datetime"], errors="coerce")
+    weather = weather.dropna(subset=["datetime"]).sort_values("datetime")
+    timeline = pd.DataFrame({"datetime": sorted(out["datetime"].dropna().unique())})
+    merged = pd.merge_asof(
+        timeline.sort_values("datetime"),
+        weather.sort_values("datetime"),
+        on="datetime",
+        direction="backward",
+        tolerance=pd.Timedelta("90min"),
+    )
+    merged = merged.sort_values("datetime")
+    for col in weather_cols:
+        if col not in merged:
+            merged[col] = 0.0
+        merged[col] = pd.to_numeric(merged[col], errors="coerce")
+    merged[weather_cols] = merged[weather_cols].ffill().bfill().fillna(0.0)
+    return out.merge(merged[["datetime"] + weather_cols], on="datetime", how="left").fillna(0.0)
+
 def add_targets(df: pd.DataFrame, horizons: tuple[int, ...]) -> pd.DataFrame:
     out = df.sort_values(["node_id", "datetime"]).copy()
     group = out.groupby("node_id", group_keys=False)
@@ -220,6 +266,7 @@ def build_feature_frame(
     ticket_df: pd.DataFrame | None = None,
     facility_df: pd.DataFrame | None = None,
     ropeway_df: pd.DataFrame | None = None,
+    weather_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     df = add_time_features(security_df)
     df = add_gate_context_features(df)
@@ -227,6 +274,7 @@ def build_feature_frame(
     df = add_rail_features(df, rail_df)
     df = add_ticket_features(df, ticket_df)
     df = add_facility_features(df, facility_df, ropeway_df)
+    df = add_weather_features(df, weather_df)
     df = add_targets(df, horizons)
     return df
 
@@ -248,3 +296,5 @@ def feature_columns(df: pd.DataFrame) -> list[str]:
         if pd.api.types.is_numeric_dtype(df[col]):
             cols.append(col)
     return cols
+
+

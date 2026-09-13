@@ -1,0 +1,10 @@
+﻿key,value
+samples,19308
+fit_samples,16632
+validation_samples,672
+test_samples,2004
+nodes,24
+edges_directed,300
+features,112
+device,cuda
+train_config,"{'epochs': 16, 'batch_size': 1024, 'hidden_dim': 96, 'dropout': 0.12, 'learning_rate': 0.001, 'weight_decay': 0.0001, 'random_state': 42, 'patience': 5, 'device': 'auto'}"

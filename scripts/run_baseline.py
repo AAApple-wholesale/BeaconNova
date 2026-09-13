@@ -20,6 +20,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--test-days", type=int, default=21, help="Number of latest dates used as chronological test set.")
     parser.add_argument("--skip-ticket", action="store_true", help="Skip large ticket-stream aggregation for a faster smoke run.")
     parser.add_argument("--skip-facility", action="store_true", help="Skip scenic-capacity and ropeway parameter features.")
+    parser.add_argument("--skip-weather", action="store_true", help="Skip weather context features.")
     return parser.parse_args()
 
 
@@ -40,3 +41,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+

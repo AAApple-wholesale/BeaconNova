@@ -6,7 +6,7 @@ import pandas as pd
 
 from .baseline import MultiTargetBaseline, chronological_split, regression_metrics
 from .config import ModelConfig
-from .data import load_facility_capacity, load_rail_data, load_ropeway_capacity, load_security_data, load_ticket_aggregates
+from .data import load_facility_capacity, load_rail_data, load_ropeway_capacity, load_security_data, load_ticket_aggregates, load_weather_context
 from .features import build_feature_frame, feature_columns
 from .scoring import add_comfort_and_risk, risk_summary
 
@@ -53,6 +53,7 @@ def run_baseline(config: ModelConfig) -> dict[str, Path]:
     ticket = load_ticket_aggregates(config.data_dir) if config.use_ticket_features else None
     facility = load_facility_capacity(config.data_dir) if config.use_facility_features else None
     ropeway = load_ropeway_capacity(config.data_dir) if config.use_facility_features else None
+    weather = load_weather_context(config.data_dir, security["datetime"]) if config.use_weather_features else None
     frame = build_feature_frame(
         security,
         rail,
@@ -60,6 +61,7 @@ def run_baseline(config: ModelConfig) -> dict[str, Path]:
         ticket_df=ticket,
         facility_df=facility,
         ropeway_df=ropeway,
+        weather_df=weather,
     )
 
     target_cols = []
@@ -104,3 +106,6 @@ def run_baseline(config: ModelConfig) -> dict[str, Path]:
         "feature_manifest": feature_manifest_path,
         "capacity_profile": capacity_profile_path,
     }
+
+
+

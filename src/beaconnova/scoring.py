@@ -41,6 +41,12 @@ def add_comfort_and_risk(predictions: pd.DataFrame, observed: pd.DataFrame, hori
         "facility_bottleneck_risk_index",
         "ropeway_exposure_index",
         "ropeway_avg_queue_limit_min",
+        "weather_comfort_penalty",
+        "weather_heat_stress",
+        "weather_cold_stress",
+        "weather_rain_flag",
+        "weather_wind_stress",
+        "weather_is_proxy",
     ]
     merge_cols = base_cols + [col for col in optional_cols if col in observed]
     out = predictions.merge(observed[merge_cols], on=["datetime", "node_id"], how="left")
@@ -62,6 +68,7 @@ def add_comfort_and_risk(predictions: pd.DataFrame, observed: pd.DataFrame, hori
         growth_pressure = _score_growth(out["total_person_count"].fillna(0.0), out[person_col])
         capacity_pressure = np.clip(_max_available(out, capacity_cols), 0.0, 1.5) / 1.5
         ropeway_pressure = np.clip(_max_available(out, ropeway_cols), 0.0, 1.5) / 1.5
+        weather_pressure = np.clip(out.get("weather_comfort_penalty", 0.0), 0.0, 1.0)
         exposure_pressure = np.clip(
             0.5 * out.get("facility_weather_exposure_index", 0.0)
             + 0.3 * out.get("facility_bottleneck_risk_index", 0.0)
@@ -77,6 +84,7 @@ def add_comfort_and_risk(predictions: pd.DataFrame, observed: pd.DataFrame, hori
             + 0.15 * capacity_pressure
             + 0.06 * ropeway_pressure
             + 0.04 * exposure_pressure
+            + 0.05 * weather_pressure
         )
         comfort = np.clip(100.0 * (1.0 - risk_score), 0.0, 100.0)
         pressure_detail = pd.DataFrame(
@@ -88,6 +96,7 @@ def add_comfort_and_risk(predictions: pd.DataFrame, observed: pd.DataFrame, hori
                 "容量压力": capacity_pressure,
                 "索道压力": ropeway_pressure,
                 "暴露风险": exposure_pressure,
+                "天气压力": weather_pressure,
             },
             index=out.index,
         )
@@ -124,3 +133,6 @@ def risk_summary(scored: pd.DataFrame, horizons: tuple[int, ...]) -> pd.DataFram
             for driver, count in scored[driver_col].value_counts(dropna=False).to_dict().items():
                 rows.append({"horizon_min": horizon * 5, "risk_level": f"主导因素:{driver}", "count": int(count)})
     return pd.DataFrame(rows)
+
+
+

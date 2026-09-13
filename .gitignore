@@ -21,4 +21,15 @@ outputs/baseline_v0_3_smoke/predictions.csv
 outputs/graph_v0_4/graph_predictions.csv
 outputs/graph_v0_4_smoke/
 outputs/graph_v0_4_smoke/graph_predictions.csv
+outputs/graph_v0_5_weather/graph_predictions.csv
+outputs/graph_v0_5_weather_smoke/
 
+
+outputs/graph_v0_6_calibrated/graph_predictions.csv
+outputs/temporal_graph_v0_6/temporal_graph_predictions.csv
+outputs/strategy_v0_6/strategy_recommendations.csv
+outputs/*_smoke/
+
+outputs/graph_v0_6_optimized/graph_predictions.csv
+outputs/temporal_graph_v0_7_optimized/temporal_graph_predictions.csv
+outputs/strategy_v0_7_optimized/strategy_recommendations.csv

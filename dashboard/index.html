@@ -1,0 +1,112 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BeaconNova 风险预警看板</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Badaling Scenic Intelligence</p>
+        <h1>BeaconNova 风险预警看板</h1>
+      </div>
+      <div class="status-pill">
+        <span class="pulse"></span>
+        <span id="generatedAt">读取中</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary-grid" id="modelCards"></section>
+
+      <section class="dashboard-grid">
+        <article class="panel map-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Map View</p>
+              <h2>核心风险热区</h2>
+            </div>
+            <div class="segmented" role="tablist" aria-label="导览图切换">
+              <button class="active" data-map="official">官方图</button>
+              <button data-map="user">手绘图</button>
+            </div>
+          </div>
+          <div class="map-wrap">
+            <img id="mapImage" src="assets/official_map.jpg" alt="八达岭导览图" />
+            <div class="map-marker marker-a">
+              <span>前山</span>
+            </div>
+            <div class="map-marker marker-b">
+              <span>北线</span>
+            </div>
+            <div class="map-marker marker-c">
+              <span>索道</span>
+            </div>
+          </div>
+          <div class="hotspot-list" id="hotspotList"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Risk</p>
+              <h2>风险等级分布</h2>
+            </div>
+            <select id="riskModelSelect" aria-label="选择模型"></select>
+          </div>
+          <div id="riskBars" class="risk-bars"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Weather</p>
+              <h2>真实天气体感</h2>
+            </div>
+          </div>
+          <div class="weather-grid" id="weatherGrid"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Strategy</p>
+              <h2>干预收益评估</h2>
+            </div>
+          </div>
+          <div id="strategySummary" class="strategy-summary"></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>节点</th>
+                  <th>策略</th>
+                  <th>收益</th>
+                </tr>
+              </thead>
+              <tbody id="strategyExamples"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel wide-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Topology</p>
+              <h2>历史传导校准边权</h2>
+            </div>
+          </div>
+          <div class="edge-grid" id="edgeGrid"></div>
+        </article>
+      </section>
+    </main>
+
+    <script src="assets/dashboard_data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
+
+

@@ -8,12 +8,14 @@ import pandas as pd
 import torch
 
 from .baseline import regression_metrics
+from .calibration import apply_prediction_calibrator, calibration_frame, fit_prediction_calibrator
 from .config import ModelConfig
-from .data import load_context_assets, load_facility_capacity, load_rail_data, load_ropeway_capacity, load_security_data, load_ticket_aggregates
+from .data import load_context_assets, load_facility_capacity, load_rail_data, load_ropeway_capacity, load_security_data, load_ticket_aggregates, load_weather_context
 from .features import build_feature_frame
 from .graph import build_graph_dataset, graph_edges_frame, graph_nodes_frame, split_graph_dataset
 from .graph_model import GraphTrainConfig, predict_graph_model, train_graph_model
 from .scoring import add_comfort_and_risk, risk_summary
+from .topology import calibrate_graph_edges
 
 
 @dataclass(frozen=True)
@@ -75,6 +77,7 @@ def run_graph_pipeline(config: GraphPipelineConfig) -> dict[str, Path]:
     facility = load_facility_capacity(config.model.data_dir)
     ropeway = load_ropeway_capacity(config.model.data_dir)
     context_assets = load_context_assets(config.model.data_dir)
+    weather = load_weather_context(config.model.data_dir, security["datetime"]) if config.model.use_weather_features else None
     frame = build_feature_frame(
         security,
         rail,
@@ -82,26 +85,50 @@ def run_graph_pipeline(config: GraphPipelineConfig) -> dict[str, Path]:
         ticket_df=ticket,
         facility_df=facility,
         ropeway_df=ropeway,
+        weather_df=weather,
     )
     dataset = build_graph_dataset(frame, facility, ropeway, config.model.horizons, context_df=context_assets)
+    calibrated_adjacency, edge_weights = calibrate_graph_edges(frame, dataset.graph)
     train_all_idx, test_idx = split_graph_dataset(dataset, config.model.test_days)
     fit_idx, val_idx = _validation_split(train_all_idx, dataset.times, config.validation_days)
 
     trained = train_graph_model(
         dataset.x,
         dataset.y,
-        dataset.graph.adjacency,
+        calibrated_adjacency,
         dataset.graph.security_indices,
         fit_idx,
         val_idx,
         config.train,
     )
+    val_pred = predict_graph_model(
+        trained,
+        dataset.x[val_idx],
+        calibrated_adjacency,
+        dataset.graph.security_indices,
+        batch_size=max(config.train.batch_size, 512),
+    )
+    calibrator = fit_prediction_calibrator(
+        val_pred,
+        dataset.y[val_idx],
+        dataset.x[val_idx],
+        dataset.feature_names,
+        dataset.target_names,
+        dataset.graph.security_indices,
+    )
     test_pred = predict_graph_model(
         trained,
         dataset.x[test_idx],
-        dataset.graph.adjacency,
+        calibrated_adjacency,
         dataset.graph.security_indices,
         batch_size=max(config.train.batch_size, 512),
+    )
+    test_pred = apply_prediction_calibrator(
+        calibrator,
+        test_pred,
+        dataset.x[test_idx],
+        dataset.feature_names,
+        dataset.graph.security_indices,
     )
     predictions = _build_prediction_frame(dataset, test_idx, test_pred, config.model.horizons)
     observed = dataset.observed[dataset.observed["datetime"].isin(dataset.times.iloc[test_idx])].copy()
@@ -129,6 +156,8 @@ def run_graph_pipeline(config: GraphPipelineConfig) -> dict[str, Path]:
     model_path = output_dir / "graph_model.pt"
     config_path = output_dir / "graph_run_config.csv"
     context_assets_path = output_dir / "context_assets.csv"
+    edge_weights_path = output_dir / "graph_edge_weights.csv"
+    calibration_path = output_dir / "graph_calibration_coefficients.csv"
 
     scored.to_csv(prediction_path, index=False, encoding="utf-8-sig")
     metrics.to_csv(metrics_path, index=False, encoding="utf-8-sig")
@@ -138,6 +167,8 @@ def run_graph_pipeline(config: GraphPipelineConfig) -> dict[str, Path]:
     pd.DataFrame({"feature": dataset.feature_names}).to_csv(feature_manifest_path, index=False, encoding="utf-8-sig")
     trained.history.to_csv(history_path, index=False, encoding="utf-8-sig")
     context_assets.to_csv(context_assets_path, index=False, encoding="utf-8-sig")
+    edge_weights.to_csv(edge_weights_path, index=False, encoding="utf-8-sig")
+    calibration_frame(calibrator).to_csv(calibration_path, index=False, encoding="utf-8-sig")
     pd.DataFrame(
         [
             {"key": "samples", "value": len(dataset.times)},
@@ -146,6 +177,8 @@ def run_graph_pipeline(config: GraphPipelineConfig) -> dict[str, Path]:
             {"key": "test_samples", "value": len(test_idx)},
             {"key": "nodes", "value": len(dataset.graph.node_ids)},
             {"key": "edges_directed", "value": len(graph_edges_frame(dataset.graph))},
+            {"key": "edge_weight_mean", "value": float(edge_weights["calibrated_weight"].mean()) if not edge_weights.empty else 0.0},
+            {"key": "prediction_calibration", "value": "validation_ridge_linear"},
             {"key": "features", "value": len(dataset.feature_names)},
             {"key": "device", "value": trained.device},
             {"key": "train_config", "value": asdict(config.train)},
@@ -162,7 +195,13 @@ def run_graph_pipeline(config: GraphPipelineConfig) -> dict[str, Path]:
             "target_names": dataset.target_names,
             "node_ids": dataset.graph.node_ids,
             "security_indices": dataset.graph.security_indices,
-            "adjacency": dataset.graph.adjacency,
+            "adjacency": calibrated_adjacency,
+            "prediction_calibrator": {
+                "target_names": calibrator.target_names,
+                "feature_names": calibrator.feature_names,
+                "coefficients": {key: value.tolist() for key, value in calibrator.coefficients.items()},
+                "ridge_alpha": calibrator.ridge_alpha,
+            },
             "train_config": asdict(config.train),
         },
         model_path,
@@ -179,4 +218,16 @@ def run_graph_pipeline(config: GraphPipelineConfig) -> dict[str, Path]:
         "model": model_path,
         "run_config": config_path,
         "context_assets": context_assets_path,
+        "edge_weights": edge_weights_path,
+        "calibration": calibration_path,
     }
+
+
+
+
+
+
+
+
+
+
